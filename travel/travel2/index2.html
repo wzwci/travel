@@ -24,6 +24,7 @@
   <div class="container">
     <!-- 首頁 -->
     <div id="home" class="content-section active">
+
       <div class="card">
         <h3 class="card-title">💱 匯率即時換算</h3>
         <div class="exchange-section">
@@ -76,18 +77,6 @@
         <button class="day-nav-btn" onclick="changeDay(1)">›</button>
       </div>
 
-      <!-- 日期顯示 -->
-      <div class="date-display" id="dateDisplay">1/5 (三) - 抵達與安頓</div>
-
-      <div class="card">
-        <h3 class="card-title">🌡️ 即時天氣</h3>
-        <div id="currentWeatherDisplay" style="text-align: center; padding: 20px;">
-          <div style="font-size: 4rem; margin-bottom: 10px;">☀️</div>
-          <div style="font-size: 2rem; font-weight: bold; color: #8b7355; margin-bottom: 5px;">18°C</div>
-          <div style="font-size: 1.1rem; color: #a89480;">晴朗 · 濕度 45% · 風速 5 km/h</div>
-        </div>
-      </div>
-
       <div class="card">
         <h3 class="card-title">📅 今日行程</h3>
         <div id="dailyItineraryList" class="timeline-container"></div>
@@ -96,8 +85,6 @@
     </div>
 
     <!-- 行程
-    <div id="itinerary" class="content-section">
-      </div>
 
       <div class="card">
         <h3 class="card-title">📅 我的行程</h3>
@@ -121,7 +108,7 @@
         <h3 class="card-title">💰 支出記帳</h3>
         <div id="expenseList"></div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-          <button class="btn" onclick="openScanModal()" style="flex: 2;">📷 掃描發票自動記帳</button>
+          <!-- <button class="btn" onclick="openScanModal()" style="flex: 2;">📷 掃描發票自動記帳</button> -->
           <button class="btn" onclick="openExpenseAddModal()"
             style="flex: 1; background: linear-gradient(135deg, #e8e8d0 0%, #d8d8c0 100%); color: #8b7355;">➕
             新增</button>
@@ -429,5 +416,3 @@
 </body>
 
 </html>
-
-
