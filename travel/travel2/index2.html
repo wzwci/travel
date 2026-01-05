@@ -13,6 +13,18 @@
     <div class="app-title">小精靈旅遊助手</div>
   </div>
 
+   <!-- 🎯 新增：備份功能區 -->
+  <div class="backup-section">
+    <button class="backup-btn export-btn" onclick="exportAllData()">
+      📥 匯出資料
+    </button>
+    <button class="backup-btn import-btn" onclick="document.getElementById('importFile').click()">
+      📤 匯入資料
+    </button>
+    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importAllData(event)">
+  </div>
+
+
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSection('home')">首頁</button>
     <button class="nav-tab inactive" onclick="showSection('itinerary')">行程</button>
