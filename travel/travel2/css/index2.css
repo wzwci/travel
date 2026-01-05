@@ -787,3 +787,85 @@ body {
     font-size: 1.2rem;
   }
 }
+
+ /* 備份按鈕樣式 */
+    .backup-section {
+      background: linear-gradient(135deg, #f8f4ed 0%, #e8e8d0 100%);
+      padding: 15px;
+      border-bottom: 2px solid #d4a574;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .backup-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #6dd5a5 0%, #5cb88f 100%);
+      color: white;
+    }
+
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(109, 213, 165, 0.4);
+    }
+
+    .import-btn {
+      background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+      color: white;
+    }
+
+    .import-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #6dd5a5;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      z-index: 10000;
+      animation: slideUp 0.3s ease;
+      font-weight: bold;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .backup-section {
+        flex-direction: column;
+      }
+      
+      .backup-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
