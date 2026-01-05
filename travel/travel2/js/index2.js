@@ -9,24 +9,14 @@ let currentDay = 1;
 let totalDays = 7;
 let dailyActivities = {};
 
-// ========== 初始化（確保這段在最前面） ==========
+// ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', function() {
   console.log('=== 頁面載入開始 ===');
   
-  // 1. 先載入所有儲存的資料
   loadFromStorage();
-  
-  // 2. 初始化行程系統
   initItinerary();
-  
-  // 3. 更新時間
   updateTime();
   setInterval(updateTime, 1000);
-  
-  // 4. 載入天氣
-  loadWeatherData();
-  
-  // 5. 初始化匯率換算
   convertFromJPY();
   
   console.log('=== 頁面載入完成 ===');
@@ -42,9 +32,6 @@ function saveToStorage() {
     localStorage.setItem('hotelData', JSON.stringify(hotelData));
     localStorage.setItem('dailyActivities', JSON.stringify(dailyActivities));
     console.log('✅ 資料儲存成功');
-    console.log('航班資料:', flightData);
-    console.log('飯店資料:', hotelData);
-    console.log('行程資料:', dailyActivities);
   } catch (e) {
     console.error('❌ 儲存失敗:', e);
     alert('資料儲存失敗：' + e.message);
@@ -55,14 +42,12 @@ function loadFromStorage() {
   try {
     console.log('開始載入資料...');
     
-    // 載入清單
     const savedChecklist = localStorage.getItem('checklistItems');
     if (savedChecklist) {
       checklistItems = JSON.parse(savedChecklist);
       console.log('載入清單:', checklistItems.length, '項');
     }
     
-    // 載入記帳
     const savedExpenses = localStorage.getItem('expenses');
     if (savedExpenses) {
       expenses = JSON.parse(savedExpenses);
@@ -75,21 +60,18 @@ function loadFromStorage() {
       ];
     }
     
-    // 載入航班資訊
     const savedFlight = localStorage.getItem('flightData');
     if (savedFlight) {
       flightData = JSON.parse(savedFlight);
       console.log('載入航班:', flightData);
     }
     
-    // 載入飯店資訊
     const savedHotel = localStorage.getItem('hotelData');
     if (savedHotel) {
       hotelData = JSON.parse(savedHotel);
       console.log('載入飯店:', hotelData);
     }
     
-    // 載入行程資料
     const savedActivities = localStorage.getItem('dailyActivities');
     if (savedActivities) {
       dailyActivities = JSON.parse(savedActivities);
@@ -98,7 +80,6 @@ function loadFromStorage() {
     
     console.log('✅ 資料載入完成');
     
-    // 渲染所有資料
     renderChecklist();
     renderExpenses();
     renderFlightInfo();
@@ -110,7 +91,7 @@ function loadFromStorage() {
   }
 }
 
-// 時間更新函數 (保持不變)
+// ========== 時間更新 ==========
 function updateTime() {
   const now = new Date();
   const year = now.getFullYear();
@@ -126,6 +107,7 @@ function updateTime() {
     subtitle.textContent = `${year}.${month}.${day} ${ampm} ${displayHours}:${minutes}`;
   }
 }
+
 // ========== 航班資訊 ==========
 function saveFlight() {
   console.log('儲存航班資訊');
@@ -135,7 +117,7 @@ function saveFlight() {
   flightData.backTime = document.getElementById('flightBackTime').value;
   
   console.log('航班資料:', flightData);
-  saveToStorage(); // 重要！
+  saveToStorage();
   renderFlightInfo();
   closeModal('flightModal');
   alert('✅ 航班資訊已儲存');
@@ -151,7 +133,7 @@ function saveHotel() {
   hotelData.checkout = document.getElementById('hotelCheckout').value;
   
   console.log('飯店資料:', hotelData);
-  saveToStorage(); // 重要！
+  saveToStorage();
   renderHotelInfo();
   closeModal('hotelModal');
   alert('✅ 飯店資訊已儲存');
@@ -173,7 +155,7 @@ function saveChecklistItem() {
   });
   
   console.log('新增清單項目:', text);
-  saveToStorage(); // 重要！
+  saveToStorage();
   renderChecklist();
   closeModal('checklistModal');
 }
@@ -183,7 +165,7 @@ function toggleChecklistItem(id) {
   if (item) {
     item.checked = !item.checked;
     console.log('切換清單狀態:', id);
-    saveToStorage(); // 重要！
+    saveToStorage();
     renderChecklist();
   }
 }
@@ -219,7 +201,7 @@ function saveExpense() {
   }
   
   console.log('儲存記帳:', expenses.length, '筆');
-  saveToStorage(); // 重要！
+  saveToStorage();
   renderExpenses();
   closeModal('expenseAddModal');
 }
@@ -228,7 +210,7 @@ function deleteExpense() {
   if (currentEditId && confirm('確定要刪除這筆支出嗎？')) {
     expenses = expenses.filter(e => e.id !== currentEditId);
     console.log('刪除記帳');
-    saveToStorage(); // 重要！
+    saveToStorage();
     renderExpenses();
     closeModal('expenseAddModal');
   }
@@ -592,96 +574,84 @@ function checkTaxFree(jpy) {
   }
 }
 
+// ========== 備份功能 ==========
+function showToast(message, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  if (isError) {
+    toast.style.background = '#dc3545';
+  }
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
 
-    // 顯示提示訊息
-    function showToast(message, isError = false) {
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = message;
-      if (isError) {
-        toast.style.background = '#dc3545';
-      }
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+function exportAllData() {
+  try {
+    const allData = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      allData[key] = localStorage.getItem(key);
     }
 
-    // 匯出所有資料
-    function exportAllData() {
-      try {
-        // 收集所有 localStorage 的資料
-        const allData = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          allData[key] = localStorage.getItem(key);
-        }
+    const backupData = {
+      exportDate: new Date().toISOString(),
+      exportDateReadable: new Date().toLocaleString('zh-TW'),
+      data: allData
+    };
 
-        // 加入匯出時間
-        const backupData = {
-          exportDate: new Date().toISOString(),
-          exportDateReadable: new Date().toLocaleString('zh-TW'),
-          data: allData
-        };
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    const fileName = `旅遊助手備份_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.json`;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-        // 轉成 JSON 並下載
-        const dataStr = JSON.stringify(backupData, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = `旅遊助手備份_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.json`;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    showToast('✅ 資料匯出成功！');
+  } catch (error) {
+    console.error('匯出錯誤:', error);
+    showToast('❌ 匯出失敗，請重試', true);
+  }
+}
 
-        showToast('✅ 資料匯出成功！');
-      } catch (error) {
-        console.error('匯出錯誤:', error);
-        showToast('❌ 匯出失敗，請重試', true);
-      }
-    }
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    // 匯入所有資料
-    function importAllData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const backupData = JSON.parse(e.target.result);
-          
-          // 顯示確認對話框
-          const exportDate = backupData.exportDateReadable || '未知時間';
-          const confirmMsg = `即將匯入 ${exportDate} 的備份資料\n\n⚠️ 這會覆蓋目前的所有資料\n\n確定要繼續嗎？`;
-          
-          if (confirm(confirmMsg)) {
-            // 清空現有資料
-            localStorage.clear();
-            
-            // 匯入新資料
-            const data = backupData.data || backupData;
-            for (const key in data) {
-              localStorage.setItem(key, data[key]);
-            }
-
-            showToast('✅ 資料匯入成功！頁面即將重新載入...');
-            
-            // 1秒後重新載入頁面
-            setTimeout(() => {
-              location.reload();
-            }, 1000);
-          }
-        } catch (error) {
-          console.error('匯入錯誤:', error);
-          showToast('❌ 檔案格式錯誤，請選擇正確的備份檔案', true);
-        }
-      };
-      reader.readAsText(file);
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backupData = JSON.parse(e.target.result);
       
-      // 清空 input，允許重複選擇同一檔案
-      event.target.value = '';
-    }
+      const exportDate = backupData.exportDateReadable || '未知時間';
+      const confirmMsg = `即將匯入 ${exportDate} 的備份資料\n\n⚠️ 這會覆蓋目前的所有資料\n\n確定要繼續嗎？`;
+      
+      if (confirm(confirmMsg)) {
+        localStorage.clear();
+        
+        const data = backupData.data || backupData;
+        for (const key in data) {
+          localStorage.setItem(key, data[key]);
+        }
 
+        showToast('✅ 資料匯入成功！頁面即將重新載入...');
+        
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('匯入錯誤:', error);
+      showToast('❌ 檔案格式錯誤，請選擇正確的備份檔案', true);
+    }
+  };
+  reader.readAsText(file);
+  
+  event.target.value = '';
+}
