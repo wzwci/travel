@@ -13,8 +13,8 @@
     <div class="app-title">小精靈旅遊助手</div>
   </div>
 
-   <!-- 🎯 新增：備份功能區 -->
-    <div class="backup-section">
+    <!-- 🎯 新增：備份功能區 -->
+  <div class="backup-section">
     <button class="backup-btn export-btn" onclick="exportAllData()">
       📥 匯出資料
     </button>
@@ -25,7 +25,6 @@
   </div>
   <div id="lastBackupInfo" class="backup-info"></div>
 
-  
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSection('home')">首頁</button>
@@ -96,6 +95,12 @@
         <div id="dailyItineraryList" class="timeline-container"></div>
         <button class="btn" onclick="openActivityModal()" style="width: 100%; margin-top: 15px;">➕ 新增活動</button>
       </div>
+
+      <div class="card">
+        <h3 class="card-title">📝 推薦景點／美食</h3>
+        <textarea id="dayRecommendations" rows="4" placeholder="這天想去逛逛的景點、想吃的店家，先記下來，之後排進行程～"></textarea>
+        <button class="btn" onclick="saveDayNotes()" style="width: 100%; margin-top: 15px;">💾 儲存筆記</button>
+      </div>
     </div>
 
     <!-- 行程
@@ -110,7 +115,11 @@
     <!-- 清單 -->
     <div id="checklist" class="content-section">
       <div class="card">
-        <h3 class="card-title">✅ 打包清單</h3>
+        <h3 class="card-title">✅ 清單</h3>
+        <div class="checklist-tabs">
+          <div class="checklist-tab active" id="tabPack" onclick="switchChecklistCategory('pack')">🎒 打包清單</div>
+          <div class="checklist-tab" id="tabBuy" onclick="switchChecklistCategory('buy')">🛍️ 購買清單</div>
+        </div>
         <div id="checklistItems"></div>
         <button class="btn" onclick="openChecklistModal()" style="width: 100%; margin-top: 15px;">➕ 新增項目</button>
       </div>
@@ -248,6 +257,13 @@
         <button class="close-btn" onclick="closeModal('checklistModal')">✕</button>
       </div>
       <div class="form-group">
+        <label>分類</label>
+        <select id="checklistCategory">
+          <option value="pack">🎒 打包清單</option>
+          <option value="buy">🛍️ 購買清單</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>項目名稱</label>
         <input type="text" id="checklistItem" placeholder="例：護照、充電器">
       </div>
@@ -380,16 +396,24 @@
         <input type="text" id="flightGo" placeholder="例：CI100">
       </div>
       <div class="form-group">
-        <label>去程時間</label>
-        <input type="datetime-local" id="flightGoTime">
+        <label>去程出發時間</label>
+        <input type="datetime-local" id="flightGoDepart">
+      </div>
+      <div class="form-group">
+        <label>去程抵達時間</label>
+        <input type="datetime-local" id="flightGoArrive">
       </div>
       <div class="form-group">
         <label>回程航班</label>
         <input type="text" id="flightBack" placeholder="例：CI101">
       </div>
       <div class="form-group">
-        <label>回程時間</label>
-        <input type="datetime-local" id="flightBackTime">
+        <label>回程出發時間</label>
+        <input type="datetime-local" id="flightBackDepart">
+      </div>
+      <div class="form-group">
+        <label>回程抵達時間</label>
+        <input type="datetime-local" id="flightBackArrive">
       </div>
       <button class="btn-save" onclick="saveFlight()">💾 儲存</button>
     </div>
@@ -425,6 +449,20 @@
       <button class="btn-save" onclick="saveHotel()">💾 儲存</button>
     </div>
   </div>
+
+  <!-- 通用確認視窗 -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content" style="max-width: 320px;">
+      <div style="padding: 10px; text-align: center;">
+        <p id="confirmMessage" style="margin-bottom: 20px; font-size: 1rem; color: #5a4a3a; line-height: 1.6; white-space: pre-line;"></p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn" onclick="handleConfirmCancel()" style="flex: 1; background: linear-gradient(135deg, #e8e8d0 0%, #d8d8c0 100%); color: #8b7355;">取消</button>
+          <button class="btn-delete" onclick="handleConfirmOk()" style="flex: 1;">確定刪除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script src="js/index2.js"></script>
 </body>

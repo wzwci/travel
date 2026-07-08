@@ -124,6 +124,102 @@ body {
   margin-bottom: 20px;
 }
 
+/* 清單分類頁籤（打包清單／購買清單） */
+.checklist-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.checklist-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8f4ed 0%, #e8e8d0 100%);
+  color: #8b7355;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.checklist-tab:hover {
+  border-color: #d4a574;
+}
+
+.checklist-tab.active {
+  background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+  color: white;
+}
+
+/* 清單項目（勾選框 + 文字 + 刪除按鈕） */
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border-bottom: 1px solid #e8e0d0;
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
+}
+
+.checklist-item input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #b8956a;
+}
+
+.checklist-item span {
+  flex: 1;
+  font-size: 1rem;
+  color: #5a4a3a;
+  word-break: break-word;
+}
+
+.checklist-delete-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checklist-delete-btn:hover,
+.checklist-delete-btn:active {
+  background: rgba(198, 126, 92, 0.15);
+}
+
+#dayRecommendations {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #d4a574;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  color: #5a4a3a;
+  box-sizing: border-box;
+}
+
+#dayRecommendations:focus {
+  outline: none;
+  border-color: #8b7355;
+  box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+}
+
 .weather-day {
   background: linear-gradient(135deg, rgba(212, 165, 116, 0.1) 0%, rgba(184, 149, 106, 0.1) 100%);
   border: 2px solid #d4a574;

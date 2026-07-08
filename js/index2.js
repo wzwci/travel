@@ -2,12 +2,14 @@
 let itineraries = [];
 let checklistItems = [];
 let expenses = [];
-let flightData = { go: '', goTime: '', back: '', backTime: '' };
+let flightData = { goFlight: '', goDepartTime: '', goArriveTime: '', backFlight: '', backDepartTime: '', backArriveTime: '' };
 let hotelData = { name: '', address: '', phone: '', checkin: '', checkout: '' };
 let currentEditId = null;
 let currentDay = 1;
 let totalDays = 7;
 let dailyActivities = {};
+let dailyNotes = {};
+let currentChecklistCategory = 'pack';
 
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', function() {
@@ -32,6 +34,7 @@ function saveToStorage() {
     localStorage.setItem('flightData', JSON.stringify(flightData));
     localStorage.setItem('hotelData', JSON.stringify(hotelData));
     localStorage.setItem('dailyActivities', JSON.stringify(dailyActivities));
+    localStorage.setItem('dailyNotes', JSON.stringify(dailyNotes));
     console.log('✅ 資料儲存成功');
   } catch (e) {
     console.error('❌ 儲存失敗:', e);
@@ -63,7 +66,16 @@ function loadFromStorage() {
     
     const savedFlight = localStorage.getItem('flightData');
     if (savedFlight) {
-      flightData = JSON.parse(savedFlight);
+      const parsed = JSON.parse(savedFlight);
+      // 相容舊版資料格式（go/goTime/back/backTime），自動搬到新欄位
+      flightData = {
+        goFlight: parsed.goFlight || parsed.go || '',
+        goDepartTime: parsed.goDepartTime || parsed.goTime || '',
+        goArriveTime: parsed.goArriveTime || '',
+        backFlight: parsed.backFlight || parsed.back || '',
+        backDepartTime: parsed.backDepartTime || parsed.backTime || '',
+        backArriveTime: parsed.backArriveTime || ''
+      };
       console.log('載入航班:', flightData);
     }
     
@@ -77,6 +89,12 @@ function loadFromStorage() {
     if (savedActivities) {
       dailyActivities = JSON.parse(savedActivities);
       console.log('載入行程:', Object.keys(dailyActivities).length, '天');
+    }
+
+    const savedNotes = localStorage.getItem('dailyNotes');
+    if (savedNotes) {
+      dailyNotes = JSON.parse(savedNotes);
+      console.log('載入景點筆記:', Object.keys(dailyNotes).length, '天');
     }
     
     console.log('✅ 資料載入完成');
@@ -112,10 +130,12 @@ function updateTime() {
 // ========== 航班資訊 ==========
 function saveFlight() {
   console.log('儲存航班資訊');
-  flightData.go = document.getElementById('flightGo').value;
-  flightData.goTime = document.getElementById('flightGoTime').value;
-  flightData.back = document.getElementById('flightBack').value;
-  flightData.backTime = document.getElementById('flightBackTime').value;
+  flightData.goFlight = document.getElementById('flightGo').value;
+  flightData.goDepartTime = document.getElementById('flightGoDepart').value;
+  flightData.goArriveTime = document.getElementById('flightGoArrive').value;
+  flightData.backFlight = document.getElementById('flightBack').value;
+  flightData.backDepartTime = document.getElementById('flightBackDepart').value;
+  flightData.backArriveTime = document.getElementById('flightBackArrive').value;
   
   console.log('航班資料:', flightData);
   saveToStorage();
@@ -140,9 +160,31 @@ function saveHotel() {
   alert('✅ 飯店資訊已儲存');
 }
 
+// ========== 通用確認視窗（取代原生 confirm，避免部分手機瀏覽器/App內建瀏覽器封鎖跳窗） ==========
+let _confirmCallback = null;
+
+function showConfirm(message, onConfirm) {
+  document.getElementById('confirmMessage').textContent = message;
+  _confirmCallback = onConfirm;
+  document.getElementById('confirmModal').style.display = 'flex';
+}
+
+function handleConfirmOk() {
+  document.getElementById('confirmModal').style.display = 'none';
+  const cb = _confirmCallback;
+  _confirmCallback = null;
+  if (cb) cb();
+}
+
+function handleConfirmCancel() {
+  document.getElementById('confirmModal').style.display = 'none';
+  _confirmCallback = null;
+}
+
 // ========== 清單管理 ==========
 function saveChecklistItem() {
   const text = document.getElementById('checklistItem').value.trim();
+  const category = document.getElementById('checklistCategory').value;
   
   if (!text) {
     alert('請輸入項目名稱');
@@ -152,13 +194,30 @@ function saveChecklistItem() {
   checklistItems.push({
     id: Date.now(),
     text: text,
-    checked: false
+    checked: false,
+    category: category
   });
   
-  console.log('新增清單項目:', text);
+  console.log('新增清單項目:', text, category);
   saveToStorage();
   renderChecklist();
   closeModal('checklistModal');
+}
+
+function deleteChecklistItem(id) {
+  showConfirm('確定要刪除這個項目嗎？', () => {
+    checklistItems = checklistItems.filter(item => item.id !== id);
+    console.log('刪除清單項目:', id);
+    saveToStorage();
+    renderChecklist();
+  });
+}
+
+function switchChecklistCategory(category) {
+  currentChecklistCategory = category;
+  document.getElementById('tabPack').classList.toggle('active', category === 'pack');
+  document.getElementById('tabBuy').classList.toggle('active', category === 'buy');
+  renderChecklist();
 }
 
 function toggleChecklistItem(id) {
@@ -208,13 +267,14 @@ function saveExpense() {
 }
 
 function deleteExpense() {
-  if (currentEditId && confirm('確定要刪除這筆支出嗎？')) {
+  if (!currentEditId) return;
+  showConfirm('確定要刪除這筆支出嗎？', () => {
     expenses = expenses.filter(e => e.id !== currentEditId);
     console.log('刪除記帳');
     saveToStorage();
     renderExpenses();
     closeModal('expenseAddModal');
-  }
+  });
 }
 
 // ========== 行程管理 ==========
@@ -222,6 +282,7 @@ function initItinerary() {
   console.log('初始化行程系統');
   currentDay = 1;
   renderDailyActivities();
+  renderDayNotes();
 }
 
 function changeDay(delta) {
@@ -230,7 +291,23 @@ function changeDay(delta) {
     currentDay = newDay;
     document.getElementById('dayTitle').textContent = `Day ${currentDay}`;
     renderDailyActivities();
+    renderDayNotes();
   }
+}
+
+function renderDayNotes() {
+  const textarea = document.getElementById('dayRecommendations');
+  if (!textarea) return;
+  const dayKey = `day${currentDay}`;
+  textarea.value = dailyNotes[dayKey] || '';
+}
+
+function saveDayNotes() {
+  const dayKey = `day${currentDay}`;
+  const text = document.getElementById('dayRecommendations').value.trim();
+  dailyNotes[dayKey] = text;
+  saveToStorage();
+  showToast('✅ 已儲存推薦景點／美食筆記');
 }
 
 function openActivityModal(activityId = null) {
@@ -324,14 +401,15 @@ function saveActivity() {
 }
 
 function deleteActivity() {
-  if (currentEditId && confirm('確定要刪除此活動嗎？')) {
+  if (!currentEditId) return;
+  showConfirm('確定要刪除此活動嗎？', () => {
     const dayKey = `day${currentDay}`;
     dailyActivities[dayKey] = (dailyActivities[dayKey] || []).filter(a => a.id !== currentEditId);
     console.log('刪除活動');
     saveToStorage();
     renderDailyActivities();
     closeModal('activityModal');
-  }
+  });
 }
 
 function renderDailyActivities() {
@@ -356,7 +434,7 @@ function renderDailyActivities() {
         ${activity.tags.length > 0 ? `<div class="timeline-tags">${activity.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
         ${activity.transport.length > 0 ? `<div class="timeline-transport">${activity.transport.map(t => `<div>🚇 ${t}</div>`).join('')}</div>` : ''}
         ${activity.ticket ? `<div class="timeline-ticket">🎫 ${activity.ticket}</div>` : ''}
-        ${activity.notes ? `<div class="timeline-notes">📝 ${activity.notes}</div>` : ''}
+        ${activity.notes ? `<div class="timeline-notes" style="white-space: pre-wrap;">📝 ${activity.notes}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -367,15 +445,18 @@ function renderChecklist() {
   const container = document.getElementById('checklistItems');
   if (!container) return;
   
-  if (checklistItems.length === 0) {
+  const filteredItems = checklistItems.filter(item => (item.category || 'pack') === currentChecklistCategory);
+  
+  if (filteredItems.length === 0) {
     container.innerHTML = '<div style="text-align: center; color: #a89480; padding: 20px;">尚無項目</div>';
     return;
   }
   
-  container.innerHTML = checklistItems.map(item => `
+  container.innerHTML = filteredItems.map(item => `
     <div class="checklist-item">
       <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem(${item.id})">
       <span style="${item.checked ? 'text-decoration: line-through; color: #a89480;' : ''}">${item.text}</span>
+      <button class="checklist-delete-btn" onclick="deleteChecklistItem(${item.id})" title="刪除">🗑️</button>
     </div>
   `).join('');
 }
@@ -394,7 +475,7 @@ function renderExpenses() {
       <div style="flex: 1;">
         <div style="font-weight: 600; margin-bottom: 5px;">${expense.type}</div>
         <div style="font-size: 0.85rem; color: #a89480;">${expense.date}</div>
-        ${expense.details ? `<div style="font-size: 0.85rem; color: #8b7355; margin-top: 3px;">${expense.details}</div>` : ''}
+        ${expense.details ? `<div style="font-size: 0.85rem; color: #8b7355; margin-top: 3px; white-space: pre-wrap;">${expense.details}</div>` : ''}
       </div>
       <div style="font-weight: 700; color: #8b7355;">NT$ ${expense.amount.toLocaleString()}</div>
     </div>
@@ -411,22 +492,24 @@ function renderFlightInfo() {
   const container = document.getElementById('flightInfo');
   if (!container) return;
   
-  if (!flightData.go && !flightData.back) {
+  if (!flightData.goFlight && !flightData.backFlight) {
     container.innerHTML = '<div style="text-align: center; color: #a89480; padding: 20px;">尚未設定航班資訊</div>';
     return;
   }
   
   container.innerHTML = `
-    ${flightData.go ? `
+    ${flightData.goFlight ? `
       <div style="margin-bottom: 15px;">
-        <div style="font-weight: 600; margin-bottom: 5px;">✈️ 去程：${flightData.go}</div>
-        <div style="color: #8b7355;">${flightData.goTime ? new Date(flightData.goTime).toLocaleString('zh-TW') : '未設定時間'}</div>
+        <div style="font-weight: 600; margin-bottom: 5px;">✈️ 去程：${flightData.goFlight}</div>
+        <div style="color: #8b7355;">🛫 出發：${flightData.goDepartTime ? new Date(flightData.goDepartTime).toLocaleString('zh-TW') : '未設定'}</div>
+        <div style="color: #8b7355;">🛬 抵達：${flightData.goArriveTime ? new Date(flightData.goArriveTime).toLocaleString('zh-TW') : '未設定'}</div>
       </div>
     ` : ''}
-    ${flightData.back ? `
+    ${flightData.backFlight ? `
       <div>
-        <div style="font-weight: 600; margin-bottom: 5px;">✈️ 回程：${flightData.back}</div>
-        <div style="color: #8b7355;">${flightData.backTime ? new Date(flightData.backTime).toLocaleString('zh-TW') : '未設定時間'}</div>
+        <div style="font-weight: 600; margin-bottom: 5px;">✈️ 回程：${flightData.backFlight}</div>
+        <div style="color: #8b7355;">🛫 出發：${flightData.backDepartTime ? new Date(flightData.backDepartTime).toLocaleString('zh-TW') : '未設定'}</div>
+        <div style="color: #8b7355;">🛬 抵達：${flightData.backArriveTime ? new Date(flightData.backArriveTime).toLocaleString('zh-TW') : '未設定'}</div>
       </div>
     ` : ''}
   `;
@@ -444,7 +527,7 @@ function renderHotelInfo() {
   container.innerHTML = `
     <div style="margin-bottom: 10px;">
       <div style="font-weight: 600; margin-bottom: 5px;">🏨 ${hotelData.name}</div>
-      ${hotelData.address ? `<div style="color: #8b7355; margin-bottom: 5px;">📍 ${hotelData.address}</div>` : ''}
+      ${hotelData.address ? `<div style="color: #8b7355; margin-bottom: 5px; white-space: pre-wrap;">📍 ${hotelData.address}</div>` : ''}
       ${hotelData.phone ? `<div style="color: #8b7355; margin-bottom: 5px;">📞 ${hotelData.phone}</div>` : ''}
     </div>
     ${hotelData.checkin || hotelData.checkout ? `
@@ -459,6 +542,7 @@ function renderHotelInfo() {
 // ========== Modal 控制 ==========
 function openChecklistModal() {
   document.getElementById('checklistItem').value = '';
+  document.getElementById('checklistCategory').value = currentChecklistCategory;
   document.getElementById('checklistModal').style.display = 'flex';
 }
 
@@ -493,10 +577,12 @@ function openExpenseEditModal(id) {
 }
 
 function openFlightModal() {
-  document.getElementById('flightGo').value = flightData.go || '';
-  document.getElementById('flightGoTime').value = flightData.goTime || '';
-  document.getElementById('flightBack').value = flightData.back || '';
-  document.getElementById('flightBackTime').value = flightData.backTime || '';
+  document.getElementById('flightGo').value = flightData.goFlight || '';
+  document.getElementById('flightGoDepart').value = flightData.goDepartTime || '';
+  document.getElementById('flightGoArrive').value = flightData.goArriveTime || '';
+  document.getElementById('flightBack').value = flightData.backFlight || '';
+  document.getElementById('flightBackDepart').value = flightData.backDepartTime || '';
+  document.getElementById('flightBackArrive').value = flightData.backArriveTime || '';
   document.getElementById('flightModal').style.display = 'flex';
 }
 
@@ -605,6 +691,9 @@ async function exportAllData() {
     const fileName = `旅遊助手備份_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.json`;
     const blob = new Blob([dataStr], { type: 'application/json' });
 
+    // 手機優先用「分享」直接把備份檔傳到 LINE / Google Drive / 訊息等 App，
+    // 避免使用者要自己去「下載」資料夾裡找檔案——這是手機上最容易失敗、
+    // 也最容易在傳輸過程中把檔案改壞的一步。
     const file = new File([blob], fileName, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
@@ -618,12 +707,14 @@ async function exportAllData() {
         return;
       } catch (shareError) {
         if (shareError.name === 'AbortError') {
+          // 使用者自己取消分享，不視為錯誤，直接結束
           return;
         }
         console.warn('分享失敗，改用下載方式:', shareError);
       }
     }
 
+    // 桌面瀏覽器，或裝置不支援分享功能時，走原本的下載方式
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -681,6 +772,7 @@ function importAllData(event) {
       const data = backupData.data || backupData;
       const keys = Object.keys(data || {});
 
+      // 安全檢查：備份檔是空的就直接擋下，避免把現有資料清空又匯入不了任何東西
       if (keys.length === 0) {
         showToast('❌ 這個備份檔案是空的，沒有可匯入的資料', true);
         return;
@@ -689,7 +781,7 @@ function importAllData(event) {
       const exportDate = backupData.exportDateReadable || '未知時間';
       const confirmMsg = `即將匯入 ${exportDate} 的備份資料（共 ${keys.length} 筆項目）\n\n⚠️ 這會覆蓋目前的所有資料\n\n確定要繼續嗎？`;
 
-      if (confirm(confirmMsg)) {
+      showConfirm(confirmMsg, () => {
         localStorage.clear();
 
         for (const key in data) {
@@ -701,7 +793,7 @@ function importAllData(event) {
         setTimeout(() => {
           location.reload();
         }, 1000);
-      }
+      });
     } catch (error) {
       console.error('匯入錯誤:', error);
       showToast('❌ 檔案格式錯誤，這可能不是有效的備份檔，或在傳輸過程中被修改過（例如被聊天軟體預覽後重存）', true);
